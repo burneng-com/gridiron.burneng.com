@@ -1,0 +1,1394 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Learn English through NFL football vocabulary. Daily 5-minute word garden." />
+  <title>Regulus English Playbook</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>🏈</text></svg>" />
+</head>
+<body>
+  <!-- ===== HEADER ===== -->
+  <header id="app-header">
+    <div class="header-left">
+      <h1 id="app-title">Regulus English Playbook</h1>
+      <p id="app-subtitle">用 NFL 美式足球，每天學會更多英文單字。</p>
+    </div>
+    <div class="header-right">
+      <button id="lang-btn" class="icon-btn" title="Switch Language">🌐</button>
+      <button id="dark-btn" class="icon-btn" title="Dark Mode">🌙</button>
+      <button id="search-btn" class="icon-btn" title="Search">🔍</button>
+    </div>
+  </header>
+
+  <!-- ===== SEARCH OVERLAY ===== -->
+  <div id="search-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="overlay-header">
+        <h3 id="search-title">Search Words</h3>
+        <button id="search-close" class="close-btn">&times;</button>
+      </div>
+      <input type="text" id="search-input" placeholder="🔍 Search words..." />
+      <select id="filter-category">
+        <option value="all">All Categories</option>
+        <option value="nfl">🏈 NFL</option>
+        <option value="football">⚽ Football</option>
+        <option value="daily">📅 Daily</option>
+        <option value="emotion">💭 Emotion</option>
+        <option value="work">💼 Work</option>
+        <option value="travel">✈️ Travel</option>
+        <option value="tech">💻 Tech</option>
+        <option value="food">🍔 Food</option>
+      </select>
+      <div id="search-results" class="results-list"></div>
+      <div id="search-empty" class="empty-state hidden">No words found.</div>
+    </div>
+  </div>
+
+  <!-- ===== EXPORT/IMPORT OVERLAY ===== -->
+  <div id="export-overlay" class="overlay hidden">
+    <div class="overlay-content">
+      <div class="overlay-header">
+        <h3>Export / Import Data</h3>
+        <button id="export-close" class="close-btn">&times;</button>
+      </div>
+      <button id="export-btn" class="btn btn-primary full">📥 Export Progress (JSON)</button>
+      <button id="import-btn" class="btn btn-secondary full">📤 Import Progress (JSON)</button>
+      <input type="file" id="import-file" accept=".json" class="hidden" />
+      <p id="import-msg" class="msg hidden"></p>
+      <hr />
+      <button id="reset-btn" class="btn btn-danger full">🗑 Reset All Progress</button>
+    </div>
+  </div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main id="main-content">
+    <!-- ---- VIEW: Daily Drive ---- -->
+    <section id="view-drive" class="tab-view active">
+      <div class="mode-header">
+        <h2>🏈 Daily Drive <span class="streak-badge" id="streak-display">🔥 0d</span></h2>
+        <p>Today's 5 words — gain yardage as you learn!</p>
+      </div>
+      <div id="drive-yardage" class="yardage-bar">
+        <div class="field">
+          <div id="yardage-progress" class="progress" style="width:0%"></div>
+        </div>
+        <span id="yardage-text">0 / 50 yards</span>
+      </div>
+      <div id="drive-words" class="word-list"></div>
+      <div id="drive-empty" class="empty-state hidden">
+        <h3>🏆 Touchdown! You've completed today's drive!</h3>
+        <p>Come back tomorrow for 5 new words.</p>
+        <p id="drive-stats"></p>
+      </div>
+      <div id="drive-td-celebration" class="td-celebration hidden">
+        <div class="confetti"></div>
+        <h2>🏈 TOUCHDOWN! 🏈</h2>
+        <p>Great drive! +1 Touchdown</p>
+      </div>
+    </section>
+
+    <!-- ---- VIEW: Flashcard Huddle ---- -->
+    <section id="view-huddle" class="tab-view">
+      <div class="mode-header">
+        <h2>📋 Flashcard Huddle</h2>
+        <p>Flip cards to test your memory</p>
+      </div>
+      <div id="huddle-controls" class="huddle-controls">
+        <button id="huddle-all" class="btn btn-sm active">All Words</button>
+        <button id="huddle-weak" class="btn btn-sm">Weak List</button>
+      </div>
+      <div id="huddle-card" class="flashcard">
+        <div class="card-inner" id="card-inner">
+          <div class="card-front">
+            <span id="card-word" class="card-word"></span>
+            <p class="card-hint">Tap to flip</p>
+          </div>
+          <div class="card-back">
+            <div id="card-details"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button id="huddle-dont-know" class="btn btn-danger">❌ Don't Know</button>
+        <button id="huddle-know" class="btn btn-success">✅ Got It!</button>
+      </div>
+      <div id="huddle-counter"></div>
+      <div id="huddle-empty" class="empty-state hidden">
+        <p>🎉 All caught up! No more cards to review.</p>
+      </div>
+    </section>
+
+    <!-- ---- VIEW: 4th Down Quiz ---- -->
+    <section id="view-quiz" class="tab-view">
+      <div class="mode-header">
+        <h2>🎯 4th Down Quiz</h2>
+        <p>Pick the right meaning — 4 choices, one answer</p>
+      </div>
+      <div id="quiz-stats" class="stats-bar">
+        <span id="quiz-score">Score: 0/0</span>
+        <span id="quiz-rate">Rate: —</span>
+      </div>
+      <div id="quiz-question" class="quiz-card">
+        <h3 id="quiz-word" class="quiz-word"></h3>
+        <div id="quiz-options" class="quiz-options"></div>
+      </div>
+      <div id="quiz-feedback" class="feedback hidden"></div>
+      <div id="quiz-td" class="td-celebration hidden">
+        <div class="confetti"></div>
+        <h2>🏈 TOUCHDOWN! 🏈</h2>
+        <p>5 in a row!</p>
+      </div>
+      <div id="quiz-empty" class="empty-state hidden">
+        <p>No words available for quiz. Learn some words first!</p>
+      </div>
+    </section>
+
+    <!-- ---- VIEW: Spelling Scrimmage ---- -->
+    <section id="view-spell" class="tab-view">
+      <div class="mode-header">
+        <h2>✍️ Spelling Scrimmage</h2>
+        <p>Type the English word — use hints if stuck</p>
+      </div>
+      <div id="spell-card" class="spell-card">
+        <p id="spell-zh" class="spell-zh"></p>
+        <p id="spell-example" class="spell-example"></p>
+        <div id="spell-hint-area" class="hint-area"></div>
+        <input type="text" id="spell-input" class="spell-input" placeholder="Type the word here..." autocomplete="off" />
+        <div class="spell-actions">
+          <button id="spell-hint-btn" class="btn btn-secondary">🤔 Ask Coach for Hint</button>
+          <button id="spell-submit" class="btn btn-primary">🏈 Submit</button>
+        </div>
+      </div>
+      <div id="spell-feedback" class="feedback hidden"></div>
+      <div id="spell-empty" class="empty-state hidden">
+        <p>No words available for spelling practice. Learn some words first!</p>
+      </div>
+    </section>
+
+    <!-- ---- VIEW: Red Zone Sentence Gap ---- -->
+    <section id="view-gap" class="tab-view">
+      <div class="mode-header">
+        <h2>🔴 Red Zone Sentence Gap</h2>
+        <p>Fill in the missing word in the sentence</p>
+      </div>
+      <div id="gap-zone" class="red-zone">
+        <div id="gap-progress" class="red-zone-progress">
+          <span id="gap-streak-count">0</span> in a row
+        </div>
+      </div>
+      <div id="gap-card" class="gap-card">
+        <p id="gap-sentence" class="gap-sentence"></p>
+        <div id="gap-options" class="gap-options"></div>
+      </div>
+      <div id="gap-feedback" class="feedback hidden"></div>
+      <div id="gap-td" class="td-celebration hidden">
+        <div class="confetti"></div>
+        <h2>🏈 RED ZONE TOUCHDOWN! 🏈</h2>
+        <p>5 in a row!</p>
+      </div>
+      <div id="gap-empty" class="empty-state hidden">
+        <p>No sentences available. Learn some words first!</p>
+      </div>
+    </section>
+
+    <!-- ---- VIEW: Trophy Case ---- -->
+    <section id="view-trophy" class="tab-view">
+      <div class="mode-header">
+        <h2>🏆 Trophy Case</h2>
+        <p>Your stats and achievements</p>
+      </div>
+      <div id="trophy-stats" class="stats-grid">
+        <div class="stat-card"><span id="stat-tds">0</span><label>Touchdowns</label></div>
+        <div class="stat-card"><span id="stat-yards">0</span><label>Total Yards</label></div>
+        <div class="stat-card"><span id="stat-learned">0</span><label>Words Learned</label></div>
+        <div class="stat-card"><span id="stat-quiz-rate">—</span><label>Quiz Accuracy</label></div>
+      </div>
+      <div id="trophy-achievements" class="achievements-grid">
+        <h3>🏅 Achievements</h3>
+        <div id="ach-list"></div>
+      </div>
+      <div id="trophy-actions" class="trophy-actions">
+        <button id="trophy-export" class="btn btn-secondary">📥 Export Data</button>
+        <button id="trophy-import" class="btn btn-secondary">📤 Import Data</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== BOTTOM TAB NAV ===== -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" data-tab="drive">🏈<span>Drive</span></button>
+    <button class="nav-btn" data-tab="huddle">📋<span>Cards</span></button>
+    <button class="nav-btn" data-tab="quiz">🎯<span>Quiz</span></button>
+    <button class="nav-btn" data-tab="spell">✍️<span>Spell</span></button>
+    <button class="nav-btn" data-tab="gap">🔴<span>Red Zone</span></button>
+    <button class="nav-btn" data-tab="trophy">🏆<span>Trophy</span></button>
+  </nav>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    import { words } from '../data/words';
+    import { loadProgress, saveProgress, getDefaultProgress, updateProgress, resetProgress } from '../lib/storage';
+    import { t, setLocale, getLocale, quizCorrectFeedback, spellCorrectFeedback } from '../lib/i18n';
+    import type { Word, UserProgress, TabId, Achievement } from '../types';
+
+    // ─── STATE ───
+    let progress: UserProgress;
+    let currentTab: TabId = 'drive';
+    let currentCardIndex = 0;
+    let currentCardMode: 'all' | 'weak' = 'all';
+    let quizWords: Word[] = [];
+    let quizCorrect = 0;
+    let quizTotal = 0;
+    let quizStreak = 0;
+    let quizOptions: string[][] = [];
+    let gapWords: Word[] = [];
+    let gapStreak = 0;
+    let spellWord: Word | null = null;
+    let spellHintLevel = 0;
+
+    // ─── INIT ───
+    function init() {
+      progress = loadProgress();
+      document.documentElement.classList.toggle('dark', progress.darkMode);
+      updateDarkBtn();
+      updateAllViews();
+      setupEventListeners();
+      checkAchievements();
+    }
+
+    // ─── HELPERS ───
+    const loc = () => progress.lang;
+    const tt = (k: string) => t(k, loc());
+
+    function $(id: string) { return document.getElementById(id)!; }
+    function qs(sel: string, parent?: HTMLElement) { return (parent || document).querySelector(sel) as HTMLElement; }
+    function qsa(sel: string, parent?: HTMLElement) { return (parent || document).querySelectorAll(sel); }
+
+    function showToast(msg: string, duration = 2000) {
+      const toast = $('toast');
+      toast.textContent = msg;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), duration);
+    }
+
+    function getToday(): string {
+      return new Date().toLocaleDateString('en-CA');
+    }
+
+    function isToday(d: string): boolean {
+      return d === getToday();
+    }
+
+    function shuffle<T>(arr: T[]): T[] {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function getWordsForMode(mode: string): Word[] {
+      let pool: Word[];
+      if (mode === 'weak') {
+        pool = words.filter(w => progress.weakWords.includes(w.id));
+      } else if (mode === 'learned') {
+        pool = words.filter(w => progress.learnedWords.includes(w.id));
+      } else {
+        pool = words.filter(w => !progress.learnedWords.includes(w.id));
+      }
+      if (pool.length === 0) {
+        if (mode === 'weak') return [];
+        return shuffle(words).slice(0, 20);
+      }
+      return shuffle(pool);
+    }
+
+    function updateStreak() {
+      const today = getToday();
+      const last = progress.streak.lastStudyDate;
+      if (last === today) return progress.streak.count;
+      if (!last) { progress.streak = { lastStudyDate: today, count: 1 }; return 1; }
+      const lastDate = new Date(last);
+      const todayDate = new Date(today);
+      const diff = Math.floor((todayDate.getTime() - lastDate.getTime()) / 86400000);
+      if (diff === 1) {
+        progress.streak = { lastStudyDate: today, count: Math.min(progress.streak.count + 1, 365) };
+        return progress.streak.count;
+      } else if (diff === 0) {
+        return progress.streak.count;
+      } else {
+        progress.streak = { lastStudyDate: today, count: 1 };
+        return 1;
+      }
+    }
+
+    function save() {
+      saveProgress(progress);
+    }
+
+    const ACHIEVEMENTS: Achievement[] = [
+      { id: 'rookie_learner', name: { en: 'Rookie Learner', 'zh-TW': '菜鳥學習者' }, description: { en: 'Learn your first 5 words', 'zh-TW': '學會 5 個單字' }, check: p => p.learnedWords.length >= 5 },
+      { id: 'first_touchdown', name: { en: 'First Touchdown', 'zh-TW': '首次達陣' }, description: { en: 'Complete your first daily drive', 'zh-TW': '完成第一次每日任務' }, check: p => p.touchdowns >= 1 },
+      { id: 'quiz_qb', name: { en: 'Quiz QB', 'zh-TW': '答題四分衛' }, description: { en: 'Answer 10 quiz questions correctly', 'zh-TW': 'Quiz 答對 10 題' }, check: p => p.quizStats.correct >= 10 },
+      { id: 'red_zone_master', name: { en: 'Red Zone Master', 'zh-TW': '紅區大師' }, description: { en: 'Get 5 correct in a row in Red Zone', 'zh-TW': '紅色區域連續答對 5 題' }, check: p => p.achievements.includes('red_zone_master') },
+      { id: '7day_starter', name: { en: '7-Day Starter', 'zh-TW': '七日先發' }, description: { en: 'Study for 7 consecutive days', 'zh-TW': '連續學習 7 天' }, check: p => p.streak.count >= 7 },
+      { id: '50_words', name: { en: 'Half-Century Club', 'zh-TW': '半百俱樂部' }, description: { en: 'Learn 50 words', 'zh-TW': '學會 50 個單字' }, check: p => p.learnedWords.length >= 50 },
+      { id: '100_quiz', name: { en: 'Century QB', 'zh-TW': '百題四分衛' }, description: { en: 'Answer 100 quiz questions', 'zh-TW': '完成 100 次 Quiz' }, check: p => p.quizStats.total >= 100 },
+    ];
+
+    function checkAchievements() {
+      for (const ach of ACHIEVEMENTS) {
+        if (!progress.achievements.includes(ach.id) && ach.check(progress)) {
+          progress.achievements.push(ach.id);
+          save();
+          showToast(`🏅 ${ach.name[loc()] || ach.name.en}: ${(ach.description as Record<string,string>)[loc()] || (ach.description as Record<string,string>).en}`, 3000);
+        }
+      }
+    }
+
+    // ─── UI UPDATES ───
+    function updateDarkBtn() {
+      $('dark-btn').textContent = progress.darkMode ? '☀️' : '🌙';
+    }
+
+    function updateAllViews() {
+      updateDriveView();
+      updateHuddleView();
+      updateQuizView();
+      updateSpellView();
+      updateGapView();
+      updateTrophyView();
+    }
+
+    function switchTab(tab: TabId) {
+      currentTab = tab;
+      qsa('.tab-view').forEach(v => v.classList.remove('active'));
+      qsa('.nav-btn').forEach(b => b.classList.remove('active'));
+      $(`view-${tab}`).classList.add('active');
+      const navBtn = qs(`.nav-btn[data-tab="${tab}"]`) as HTMLElement;
+      if (navBtn) navBtn.classList.add('active');
+      updateAllViews();
+    }
+
+    // ─── MODE 1: DAILY DRIVE ───
+    function updateDriveView() {
+      const today = getToday();
+      const dailyProgress = progress.dailyProgress;
+      const isNewDay = !dailyProgress || dailyProgress.date !== today;
+
+      if (isNewDay) {
+        progress.dailyProgress = { date: today, completedWordIds: [] };
+        progress.yardage = Math.max(0, progress.yardage);
+        save();
+      }
+
+      const completedIds = progress.dailyProgress.completedWordIds;
+      const allDone = completedIds.length >= 5;
+      const yardPct = Math.min(completedIds.length / 5 * 100, 100);
+
+      $('yardage-progress').style.width = yardPct + '%';
+      $('yardage-text').textContent = `${completedIds.length} / 5 drives`;
+      $('streak-display').textContent = `🔥 ${progress.streak.count}d`;
+
+      if (isNewDay) {
+        updateStreak();
+        save();
+      }
+
+      if (allDone) {
+        $('drive-words').classList.add('hidden');
+        $('drive-empty').classList.remove('hidden');
+        $('drive-stats').textContent = `🔥 ${progress.streak.count}-day streak | 🏈 ${progress.touchdowns} touchdowns`;
+        return;
+      }
+
+      $('drive-words').classList.remove('hidden');
+      $('drive-empty').classList.add('hidden');
+      $('drive-td-celebration').classList.add('hidden');
+
+      // Pick 5 daily words, prioritize NFL words not yet learned
+      const learned = new Set(progress.learnedWords);
+      const nflWords = words.filter(w => (w.category === 'nfl' || w.category === 'football') && !learned.has(w.id));
+      const generalWords = words.filter(w => (w.category !== 'nfl' && w.category !== 'football') && !learned.has(w.id));
+      let dailyPool = shuffle(nflWords).slice(0, 4).concat(shuffle(generalWords).slice(0, 1));
+      if (dailyPool.length < 5) dailyPool = dailyPool.concat(shuffle(words.filter(w => !learned.has(w.id))).slice(0, 5 - dailyPool.length));
+      dailyPool = dailyPool.slice(0, 5);
+
+      let html = '';
+      dailyPool.forEach((w, i) => {
+        const isDone = completedIds.includes(w.id);
+        html += `
+        <div class="word-card ${isDone ? 'done' : ''}" id="drive-card-${i}" data-id="${w.id}">
+          <div class="word-main">
+            <span class="word-text">${w.word}</span>
+            <span class="word-phonetic">${w.pronunciation}</span>
+            <span class="word-pos ${w.difficulty}">${w.partOfSpeech}</span>
+          </div>
+          <p class="word-zh">${w.zhTW}</p>
+          <p class="word-def">${w.definitionEn}</p>
+          <p class="word-example">${w.exampleEn}</p>
+          <p class="word-example-zh">${w.exampleZhTW}</p>
+          ${w.footballContext ? `<div class="football-context">🏈 ${w.footballContext}</div>` : ''}
+          ${isDone ? '<span class="done-tag">✓ Learned</span>' : `
+          <div class="word-actions">
+            <button class="btn btn-success btn-sm drive-know" data-word="${w.id}" data-idx="${i}">✅ Got It</button>
+            <button class="btn btn-warning btn-sm drive-weak" data-word="${w.id}" data-idx="${i}">🤔 Not Sure</button>
+            <button class="btn btn-sm drive-fav" data-word="${w.id}" data-idx="${i}">⭐ Fav</button>
+          </div>`}
+        </div>`;
+      });
+      $('drive-words').innerHTML = html;
+
+      // Bind buttons
+      qsa('.drive-know').forEach(btn => {
+        btn.addEventListener('click', () => handleDriveAction((btn as HTMLElement).dataset.word!, (btn as HTMLElement).dataset.idx!, 'know'));
+      });
+      qsa('.drive-weak').forEach(btn => {
+        btn.addEventListener('click', () => handleDriveAction((btn as HTMLElement).dataset.word!, (btn as HTMLElement).dataset.idx!, 'weak'));
+      });
+      qsa('.drive-fav').forEach(btn => {
+        btn.addEventListener('click', () => handleDriveAction((btn as HTMLElement).dataset.word!, (btn as HTMLElement).dataset.idx!, 'fav'));
+      });
+    }
+
+    function handleDriveAction(wordId: string, idx: string, action: 'know' | 'weak' | 'fav') {
+      const today = getToday();
+      if (progress.dailyProgress.date !== today) {
+        progress.dailyProgress = { date: today, completedWordIds: [] };
+      }
+
+      if (!progress.learnedWords.includes(wordId)) {
+        progress.learnedWords.push(wordId);
+        progress.yardage += 10;
+      }
+
+      if (action === 'weak' && !progress.weakWords.includes(wordId)) {
+        progress.weakWords.push(wordId);
+      }
+      if (action === 'fav') {
+        if (progress.favoriteWords.includes(wordId)) {
+          progress.favoriteWords = progress.favoriteWords.filter(id => id !== wordId);
+        } else {
+          progress.favoriteWords.push(wordId);
+        }
+      }
+
+      if (!progress.dailyProgress.completedWordIds.includes(wordId)) {
+        progress.dailyProgress.completedWordIds.push(wordId);
+      }
+
+      // Check if all 5 done → Touchdown
+      if (progress.dailyProgress.completedWordIds.length >= 5) {
+        progress.touchdowns += 1;
+        progress.yardage += 10;
+        $('drive-td-celebration').classList.remove('hidden');
+        setTimeout(() => $('drive-td-celebration').classList.add('hidden'), 2500);
+      }
+
+      save();
+      checkAchievements();
+      updateDriveView();
+      updateTrophyView();
+
+      if (action === 'know') {
+        showToast('✅ +10 yards!');
+      } else if (action === 'weak') {
+        showToast('🤔 Added to weak list. Keep practicing!');
+      } else {
+        const isFav = progress.favoriteWords.includes(wordId);
+        showToast(isFav ? '⭐ Added to favorites!' : 'Removed from favorites');
+      }
+    }
+
+    // ─── MODE 2: FLASHCARD HUDDLE ───
+    function updateHuddleView() {
+      currentCardIndex = 0;
+      const pool = currentCardMode === 'weak'
+        ? words.filter(w => progress.weakWords.includes(w.id))
+        : words;
+      if (pool.length === 0) {
+        $('huddle-card').classList.add('hidden');
+        $('huddle-empty').classList.remove('hidden');
+        $('huddle-counter').textContent = '';
+        return;
+      }
+      $('huddle-card').classList.remove('hidden');
+      $('huddle-empty').classList.add('hidden');
+      showCard(pool, 0);
+    }
+
+    function showCard(pool: Word[], idx: number) {
+      if (idx >= pool.length) {
+        $('huddle-empty').classList.remove('hidden');
+        $('huddle-card').classList.add('hidden');
+        $('huddle-counter').textContent = '';
+        return;
+      }
+      currentCardIndex = idx;
+      const w = pool[idx];
+      $('card-word').textContent = w.word;
+      $('card-details').innerHTML = `
+        <strong>${w.word}</strong> <small>${w.pronunciation}</small>
+        <p class="card-pos ${w.difficulty}">${w.partOfSpeech}</p>
+        <p class="card-zh">${w.zhTW}</p>
+        <p class="card-en">${w.definitionEn}</p>
+        <p class="card-ex">"${w.exampleEn}"</p>
+        <p class="card-ex-zh">${w.exampleZhTW}</p>
+        ${w.footballContext ? `<p class="card-ctx">🏈 ${w.footballContext}</p>` : ''}
+      `;
+      $('card-inner').classList.remove('flipped');
+      $('huddle-counter').textContent = `${idx + 1} / ${pool.length}`;
+      if (currentCardMode === 'weak') {
+        $('huddle-counter').textContent += ' (Weak List)';
+      }
+    }
+
+    function handleCardResult(known: boolean) {
+      const pool = currentCardMode === 'weak'
+        ? words.filter(w => progress.weakWords.includes(w.id))
+        : words;
+
+      if (currentCardIndex >= pool.length) return;
+      const w = pool[currentCardIndex];
+
+      if (known) {
+        if (!progress.learnedWords.includes(w.id)) {
+          progress.learnedWords.push(w.id);
+        }
+        if (progress.weakWords.includes(w.id)) {
+          progress.weakWords = progress.weakWords.filter(id => id !== w.id);
+        }
+        showToast('✅ Great!');
+      } else {
+        if (!progress.weakWords.includes(w.id)) {
+          progress.weakWords.push(w.id);
+        }
+        showToast('📝 Added to weak list');
+      }
+
+      save();
+      checkAchievements();
+
+      // Refresh pool (may have changed due to removing from weak list)
+      const newPool = currentCardMode === 'weak'
+        ? words.filter(w => progress.weakWords.includes(w.id))
+        : pool;
+      showCard(newPool, currentCardIndex + 1);
+    }
+
+    // ─── MODE 3: QUIZ ───
+    function updateQuizView() {
+      if (words.length < 1) {
+        $('quiz-empty').classList.remove('hidden');
+        $('quiz-question').classList.add('hidden');
+        return;
+      }
+      $('quiz-empty').classList.add('hidden');
+      $('quiz-question').classList.remove('hidden');
+      $('quiz-score').textContent = `Score: ${progress.quizStats.correct}/${progress.quizStats.total}`;
+      const rate = progress.quizStats.total > 0 ? Math.round(progress.quizStats.correct / progress.quizStats.total * 100) + '%' : '—';
+      $('quiz-rate').textContent = `Rate: ${rate}`;
+      generateQuizQuestion();
+    }
+
+    function generateQuizQuestion() {
+      const correct = words[Math.floor(Math.random() * words.length)];
+      let distractors = words.filter(w => w.id !== correct.id);
+      distractors = shuffle(distractors).slice(0, 3);
+      quizOptions = shuffle([correct, ...distractors]).map(w => [w.id, w.zhTW]);
+      quizWords = [correct, ...distractors];
+
+      $('quiz-word').textContent = correct.word;
+      $('quiz-feedback').classList.add('hidden');
+
+      let html = '';
+      quizOptions.forEach(([id, zh]) => {
+        html += `<button class="quiz-option-btn" data-id="${id}">${zh}</button>`;
+      });
+      $('quiz-options').innerHTML = html;
+
+      qsa('.quiz-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const selectedId = (btn as HTMLElement).dataset.id!;
+          const correctWord = quizWords.find(w => w.id === quizOptions[0][0])!;
+          // Find the correct word (the one from quizWords whose zhTW matches)
+          const correctEntry = quizWords.find(w =>
+            quizOptions.some(([id]) => id === w.id)
+          );
+          const actualCorrect = quizWords[0]; // first in quizWords was the correct one
+          const chosen = quizWords.find(w => w.id === selectedId);
+          const isCorrect = selectedId === actualCorrect.id;
+
+          progress.quizStats.total++;
+          if (isCorrect) {
+            progress.quizStats.correct++;
+            quizStreak++;
+            const fbArr = quizCorrectFeedback(loc());
+            const fb = fbArr[Math.floor(Math.random() * fbArr.length)];
+            $('quiz-feedback').classList.remove('hidden');
+            $('quiz-feedback').innerHTML = `<div class="fb-correct">${fb}</div>`;
+            if (!progress.learnedWords.includes(actualCorrect.id)) {
+              progress.learnedWords.push(actualCorrect.id);
+            }
+          } else {
+            quizStreak = 0;
+            $('quiz-feedback').classList.remove('hidden');
+            $('quiz-feedback').innerHTML = `
+              <div class="fb-wrong">🚩 Flag on the play!</div>
+              <div class="fb-answer">Correct: ${actualCorrect.zhTW} — <em>${actualCorrect.definitionEn}</em></div>
+              <div class="fb-example">"${actualCorrect.exampleEn}"</div>
+              <div class="fb-example-zh">${actualCorrect.exampleZhTW}</div>
+            `;
+            if (!progress.weakWords.includes(actualCorrect.id)) {
+              progress.weakWords.push(actualCorrect.id);
+            }
+          }
+
+          if (quizStreak >= 5) {
+            progress.touchdowns++;
+            quizStreak = 0;
+            $('quiz-td').classList.remove('hidden');
+            setTimeout(() => $('quiz-td').classList.add('hidden'), 2500);
+          }
+
+          $('quiz-options').querySelectorAll('button').forEach(b => {
+            (b as HTMLButtonElement).disabled = true;
+            if (b.dataset.id === actualCorrect.id) b.classList.add('correct');
+          });
+
+          save();
+          checkAchievements();
+          updateQuizViewStats();
+
+          setTimeout(generateQuizQuestion, 1500);
+        });
+      });
+    }
+
+    function updateQuizViewStats() {
+      $('quiz-score').textContent = `Score: ${progress.quizStats.correct}/${progress.quizStats.total}`;
+      const rate = progress.quizStats.total > 0 ? Math.round(progress.quizStats.correct / progress.quizStats.total * 100) + '%' : '—';
+      $('quiz-rate').textContent = `Rate: ${rate}`;
+    }
+
+    // ─── MODE 4: SPELLING SCRIMMAGE ───
+    function updateSpellView() {
+      const pool = getWordsForMode('learned');
+      if (pool.length === 0) {
+        $('spell-empty').classList.remove('hidden');
+        $('spell-card').classList.add('hidden');
+        return;
+      }
+      $('spell-empty').classList.add('hidden');
+      $('spell-card').classList.remove('hidden');
+      spellWord = pool[0];
+      spellHintLevel = 0;
+      $('spell-zh').textContent = spellWord.zhTW;
+      $('spell-example').textContent = `"${spellWord.exampleEn.replace(spellWord.word, '_____')}"`;
+      $('spell-hint-area').innerHTML = '';
+      $('spell-input').value = '';
+      $('spell-input').disabled = false;
+      $('spell-feedback').classList.add('hidden');
+      $('spell-input').focus();
+    }
+
+    function handleSpellSubmit() {
+      if (!spellWord) return;
+      const input = ($('spell-input') as HTMLInputElement).value.trim();
+      if (!input) return;
+
+      if (input.toLowerCase() === spellWord.word.toLowerCase()) {
+        $('spell-feedback').classList.remove('hidden');
+        const sfArr = spellCorrectFeedback(loc());
+        $('spell-feedback').innerHTML = `<div class="fb-correct">${sfArr[Math.floor(Math.random() * sfArr.length)]}</div>`;
+        ($('spell-input') as HTMLInputElement).disabled = true;
+        if (!progress.learnedWords.includes(spellWord.id)) {
+          progress.learnedWords.push(spellWord.id);
+        }
+        save();
+        checkAchievements();
+        setTimeout(updateSpellView, 1500);
+      } else {
+        spellHintLevel++;
+        showHints();
+        ($('spell-input') as HTMLInputElement).value = '';
+      }
+    }
+
+    function showHints() {
+      if (!spellWord) return;
+      let html = '';
+      const word = spellWord.word;
+      if (spellHintLevel >= 1) {
+        html += `<span class="hint">First letter: <strong>${word[0]}</strong></span>`;
+      }
+      if (spellHintLevel >= 2) {
+        html += `<span class="hint">Length: <strong>${word.length} letters</strong></span>`;
+      }
+      if (spellHintLevel >= 3) {
+        html += `<span class="hint">Pattern: <strong>${word[0]}${'_ '.repeat(word.length - 2)}${word[word.length - 1]}</strong></span>`;
+        if (spellWord.footballContext) {
+          html += `<span class="hint">Context: ${spellWord.footballContext}</span>`;
+        }
+      }
+      $('spell-hint-area').innerHTML = html;
+    }
+
+    // ─── MODE 5: RED ZONE SENTENCE GAP ───
+    function updateGapView() {
+      gapWords = getWordsForMode('learned');
+      if (gapWords.length < 2) {
+        $('gap-empty').classList.remove('hidden');
+        $('gap-card').classList.add('hidden');
+        return;
+      }
+      $('gap-empty').classList.add('hidden');
+      $('gap-card').classList.remove('hidden');
+      generateGapQuestion();
+    }
+
+    function generateGapQuestion() {
+      $('gap-feedback').classList.add('hidden');
+      const correct = gapWords[Math.floor(Math.random() * gapWords.length)];
+      let distractors = gapWords.filter(w => w.id !== correct.id);
+      distractors = shuffle(distractors).slice(0, 3);
+      const allOptions = shuffle([correct, ...distractors]);
+      const sentence = correct.exampleEn.replace(new RegExp(correct.word, 'i'), '_____');
+
+      $('gap-streak-count').textContent = String(gapStreak);
+      $('gap-sentence').textContent = sentence;
+
+      let html = '';
+      allOptions.forEach(w => {
+        html += `<button class="gap-option-btn" data-id="${w.id}">${w.word}</button>`;
+      });
+      $('gap-options').innerHTML = html;
+
+      qsa('.gap-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const selectedId = (btn as HTMLElement).dataset.id!;
+          const isCorrect = selectedId === correct.id;
+
+          if (isCorrect) {
+            gapStreak++;
+            $('gap-streak-count').textContent = String(gapStreak);
+            $('gap-feedback').classList.remove('hidden');
+            $('gap-feedback').innerHTML = `
+              <div class="fb-correct">✅ Great catch!</div>
+              <div class="fb-full">"${correct.exampleEn}"</div>
+              <div class="fb-example-zh">${correct.exampleZhTW}</div>
+            `;
+            if (!progress.learnedWords.includes(correct.id)) {
+              progress.learnedWords.push(correct.id);
+            }
+
+            if (gapStreak >= 5) {
+              progress.touchdowns++;
+              gapStreak = 0;
+              $('gap-td').classList.remove('hidden');
+              setTimeout(() => $('gap-td').classList.add('hidden'), 2500);
+              $('gap-streak-count').textContent = '0';
+              if (!progress.achievements.includes('red_zone_master')) {
+                progress.achievements.push('red_zone_master');
+              }
+            }
+          } else {
+            gapStreak = 0;
+            $('gap-streak-count').textContent = '0';
+            $('gap-feedback').classList.remove('hidden');
+            $('gap-feedback').innerHTML = `
+              <div class="fb-wrong">🚩 Flag on the play!</div>
+              <div class="fb-full-correct">Correct word: <strong>${correct.word}</strong> (${correct.zhTW})</div>
+              <div class="fb-full">"${correct.exampleEn}"</div>
+              <div class="fb-example-zh">${correct.exampleZhTW}</div>
+            `;
+            if (!progress.weakWords.includes(correct.id)) {
+              progress.weakWords.push(correct.id);
+            }
+          }
+
+          $('gap-options').querySelectorAll('button').forEach(b => {
+            (b as HTMLButtonElement).disabled = true;
+            if (b.dataset.id === correct.id) b.classList.add('correct');
+          });
+
+          save();
+          checkAchievements();
+          updateTrophyView();
+          setTimeout(generateGapQuestion, 1800);
+        });
+      });
+    }
+
+    // ─── MODE: TROPHY CASE ───
+    function updateTrophyView() {
+      $('stat-tds').textContent = String(progress.touchdowns);
+      $('stat-yards').textContent = String(progress.yardage);
+      $('stat-learned').textContent = String(progress.learnedWords.length);
+      const rate = progress.quizStats.total > 0
+        ? Math.round(progress.quizStats.correct / progress.quizStats.total * 100) + '%'
+        : '—';
+      $('stat-quiz-rate').textContent = rate;
+
+      let achHtml = '';
+      ACHIEVEMENTS.forEach(ach => {
+        const earned = progress.achievements.includes(ach.id);
+        achHtml += `
+          <div class="ach-card ${earned ? 'earned' : 'locked'}">
+            <span class="ach-icon">${earned ? '🏅' : '🔒'}</span>
+            <div>
+              <strong>${loc() === 'en' ? ach.name.en : ach.name['zh-TW'] || ach.name.en}</strong>
+              <p>${loc() === 'en' ? (ach.description as Record<string,string>).en : ((ach.description as Record<string,string>)['zh-TW'] || (ach.description as Record<string,string>).en)}</p>
+            </div>
+          </div>`;
+      });
+      if (progress.achievements.length === 0) {
+        achHtml += '<div class="empty-state"><p>No achievements yet. Start learning!</p></div>';
+      }
+      $('ach-list').innerHTML = achHtml;
+    }
+
+    // ─── SEARCH ───
+    function updateSearch(query = '', category = 'all') {
+      const results = $('search-results');
+      const empty = $('search-empty');
+      const filtered = words.filter(w => {
+        const q = query.trim().toLowerCase();
+        const catMatch = category === 'all' || w.category === category;
+        const textMatch = !q || w.word.toLowerCase().includes(q) || w.zhTW.includes(q) || w.definitionEn.toLowerCase().includes(q);
+        return catMatch && textMatch;
+      });
+
+      if (filtered.length === 0) {
+        results.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+      empty.classList.add('hidden');
+
+      let html = '';
+      filtered.slice(0, 30).forEach(w => {
+        const isLearned = progress.learnedWords.includes(w.id);
+        const isFav = progress.favoriteWords.includes(w.id);
+        html += `
+        <div class="search-result ${isLearned ? 'learned' : ''}">
+          <div class="sr-header">
+            <strong>${w.word}</strong> ${w.pronunciation}
+            <span class="word-pos ${w.difficulty}">${w.partOfSpeech}</span>
+            ${isFav ? '⭐' : ''} ${isLearned ? '✓' : ''}
+          </div>
+          <p>${w.zhTW}</p>
+          <p class="sr-def">${w.definitionEn}</p>
+          <p class="sr-ex">"${w.exampleEn}"</p>
+        </div>`;
+      });
+      results.innerHTML = html;
+    }
+
+    // ─── EVENT LISTENERS ───
+    function setupEventListeners() {
+      // Tab navigation
+      qsa('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchTab((btn as HTMLElement).dataset.tab as TabId);
+        });
+      });
+
+      // Dark mode
+      $('dark-btn').addEventListener('click', () => {
+        progress.darkMode = !progress.darkMode;
+        document.documentElement.classList.toggle('dark', progress.darkMode);
+        updateDarkBtn();
+        save();
+      });
+
+      // Language switch
+      $('lang-btn').addEventListener('click', () => {
+        progress.lang = progress.lang === 'en' ? 'zh-TW' : 'en';
+        save();
+        updateLangUI();
+        updateAllViews();
+      });
+
+      // Search
+      $('search-btn').addEventListener('click', () => {
+        $('search-overlay').classList.remove('hidden');
+        updateSearch();
+      });
+      $('search-close').addEventListener('click', () => $('search-overlay').classList.add('hidden'));
+      $('search-input').addEventListener('input', () => {
+        const q = ($('search-input') as HTMLInputElement).value;
+        const cat = ($('filter-category') as HTMLSelectElement).value;
+        updateSearch(q, cat);
+      });
+      $('filter-category').addEventListener('change', () => {
+        const q = ($('search-input') as HTMLInputElement).value;
+        const cat = ($('filter-category') as HTMLSelectElement).value;
+        updateSearch(q, cat);
+      });
+
+      // Card flip
+      $('huddle-card').addEventListener('click', () => {
+        $('card-inner').classList.toggle('flipped');
+      });
+
+      // Card results
+      $('huddle-know').addEventListener('click', (e) => { e.stopPropagation(); handleCardResult(true); });
+      $('huddle-dont-know').addEventListener('click', (e) => { e.stopPropagation(); handleCardResult(false); });
+
+      // Huddle mode toggle
+      $('huddle-all').addEventListener('click', () => {
+        currentCardMode = 'all';
+        $('huddle-all').classList.add('active');
+        $('huddle-weak').classList.remove('active');
+        updateHuddleView();
+      });
+      $('huddle-weak').addEventListener('click', () => {
+        currentCardMode = 'weak';
+        $('huddle-weak').classList.add('active');
+        $('huddle-all').classList.remove('active');
+        updateHuddleView();
+      });
+
+      // Spell
+      $('spell-submit').addEventListener('click', handleSpellSubmit);
+      $('spell-input').addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') handleSpellSubmit(); });
+      $('spell-hint-btn').addEventListener('click', () => {
+        spellHintLevel++;
+        showHints();
+      });
+
+      // Export/Import
+      $('trophy-export').addEventListener('click', exportData);
+      $('trophy-import').addEventListener('click', () => {
+        ($('import-file') as HTMLInputElement).click();
+      });
+      $('import-file').addEventListener('change', importData);
+
+      // Click outside overlays
+      $('search-overlay').addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).id === 'search-overlay') $('search-overlay').classList.add('hidden');
+      });
+    }
+
+    function updateLangUI() {
+      const loc = progress.lang;
+      setLocale(loc);
+      if (loc === 'en') {
+        $('app-title').textContent = 'Regulus English Playbook';
+        $('app-subtitle').textContent = 'Learn English through NFL football — 5 minutes a day!';
+      } else {
+        $('app-title').textContent = 'Regulus English Playbook';
+        $('app-subtitle').textContent = '用 NFL 美式足球，每天學會更多英文單字。';
+      }
+      document.documentElement.lang = loc === 'zh-TW' ? 'zh-TW' : 'en';
+    }
+
+    function exportData() {
+      const json = JSON.stringify(progress, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `regulus-playbook-backup-${getToday()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📥 Data exported!');
+    }
+
+    function importData(e: Event) {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result as string) as UserProgress;
+          progress = data;
+          save();
+          updateAllViews();
+          updateLangUI();
+          document.documentElement.classList.toggle('dark', progress.darkMode);
+          updateDarkBtn();
+          showToast('📤 Data imported successfully!');
+        } catch {
+          showToast('❌ Invalid file format');
+        }
+      };
+      reader.readAsText(file);
+      (e.target as HTMLInputElement).value = '';
+    }
+
+    // ─── STARTUP ───
+    init();
+    updateLangUI();
+  </script>
+
+  <style is:global>
+    /* ─── RESET & BASE ─── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+      font-size: 16px;
+      background: #f0f4e8;
+      color: #2d3a1f;
+      --bg: #f0f4e8;
+      --bg-card: #ffffff;
+      --bg-secondary: #e8f0d8;
+      --text: #2d3a1f;
+      --text-muted: #6b7a5a;
+      --accent: #c44b11;
+      --accent-light: #e8652b;
+      --success: #2d7a1f;
+      --success-bg: #e0f5d8;
+      --warning: #b8860b;
+      --warning-bg: #fff8e0;
+      --danger: #c42020;
+      --danger-bg: #ffe0e0;
+      --gold: #c4a411;
+      --gold-bg: #fffbe0;
+      --field: #3a5a1f;
+      --field-light: #4a7a2f;
+      --yard-white: #ffffff;
+      --border: #d4e0c4;
+      --shadow: 0 2px 12px rgba(0,0,0,.08);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    html.dark {
+      --bg: #1a2214;
+      --bg-card: #24301c;
+      --bg-secondary: #2d3a22;
+      --text: #e0e8d0;
+      --text-muted: #a0b090;
+      --accent: #e8652b;
+      --accent-light: #f0804a;
+      --success: #4ad040;
+      --success-bg: #1a3a14;
+      --warning: #e0b010;
+      --warning-bg: #3a3010;
+      --danger: #f04040;
+      --danger-bg: #3a1414;
+      --gold: #e0c020;
+      --gold-bg: #3a3010;
+      --field: #2a4a14;
+      --field-light: #3a5a22;
+      --border: #3a4a2a;
+      color-scheme: dark;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 0 80px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ─── HEADER ─── */
+    #app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px 20px 8px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 10;
+      border-bottom: 2px solid var(--field);
+    }
+    #app-header h1 { font-size: 1.3rem; color: var(--accent); line-height: 1.2; }
+    #app-subtitle { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+    .header-right { display: flex; gap: 6px; }
+    .icon-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .2s;
+    }
+    .icon-btn:hover { background: var(--border); }
+
+    /* ─── TAB VIEWS ─── */
+    .tab-view { display: none; padding: 12px 16px; }
+    .tab-view.active { display: block; }
+    .mode-header { margin-bottom: 16px; }
+    .mode-header h2 { font-size: 1.15rem; color: var(--accent); }
+    .mode-header p { font-size: .8rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ─── YARDAGE BAR ─── */
+    .yardage-bar { margin-bottom: 20px; }
+    .field {
+      width: 100%; height: 20px; background: var(--bg-secondary);
+      border-radius: 10px; overflow: hidden; position: relative;
+      border: 1px solid var(--border);
+    }
+    .field .progress {
+      height: 100%; background: linear-gradient(90deg, var(--field), var(--field-light));
+      border-radius: 10px; transition: width .4s ease;
+    }
+    #yardage-text { font-size: .75rem; color: var(--text-muted); margin-top: 4px; display: block; text-align: center; }
+
+    /* ─── WORD CARDS ─── */
+    .word-card {
+      background: var(--bg-card); border-radius: var(--radius);
+      padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow);
+      border-left: 4px solid var(--field);
+      transition: opacity .3s;
+    }
+    .word-card.done { opacity: .6; border-left-color: var(--success); }
+    .word-card .word-text { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+    .word-card .word-phonetic { font-size: .8rem; color: var(--text-muted); margin-left: 8px; }
+    .word-card .word-pos {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: .7rem; font-weight: 600; margin-left: 8px;
+    }
+    .word-pos.noun, .word-pos.n { background: #d4e4ff; color: #2040a0; }
+    .word-pos.verb, .word-pos.v { background: #ffe4d4; color: #a04020; }
+    .word-pos.adjective, .word-pos.adj { background: #e4ffd4; color: #208020; }
+    .word-pos.adverb, .word-pos.adv { background: #ffe4ff; color: #802080; }
+    .word-pos.phrase, .word-pos.phr { background: #fff8d4; color: #807020; }
+    .word-pos.idiom { background: #e4ffff; color: #206060; }
+    html.dark .word-pos.noun, html.dark .word-pos.n { background: #1a2a50; color: #80b0ff; }
+    html.dark .word-pos.verb, html.dark .word-pos.v { background: #502010; color: #ff9060; }
+    html.dark .word-pos.adjective, html.dark .word-pos.adj { background: #103020; color: #60d060; }
+    html.dark .word-pos.phrase, html.dark .word-pos.phr { background: #504010; color: #e0c040; }
+    html.dark .word-pos.idiom { background: #103030; color: #60d0d0; }
+
+    .word-zh { font-size: .95rem; color: var(--text); margin: 6px 0; }
+    .word-def { font-size: .8rem; color: var(--text-muted); }
+    .word-example { font-size: .8rem; font-style: italic; color: var(--text-muted); margin-top: 4px; }
+    .word-example-zh { font-size: .75rem; color: var(--text-muted); }
+    .football-context {
+      margin-top: 8px; padding: 8px 12px; background: var(--success-bg);
+      border-radius: var(--radius-sm); font-size: .75rem; color: var(--success);
+      border-left: 3px solid var(--success);
+    }
+    .done-tag {
+      display: inline-block; padding: 4px 12px; background: var(--success-bg);
+      color: var(--success); border-radius: 4px; font-size: .8rem; margin-top: 8px;
+    }
+    .word-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+    /* ─── BUTTONS ─── */
+    .btn {
+      padding: 10px 18px; border: none; border-radius: var(--radius-sm);
+      font-size: .85rem; font-weight: 600; cursor: pointer;
+      transition: background .2s, transform .15s;
+      border: 2px solid transparent;
+    }
+    .btn:active { transform: scale(.96); }
+    .btn-sm { padding: 6px 12px; font-size: .75rem; }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-secondary { background: var(--bg-secondary); color: var(--text); border-color: var(--border); }
+    .btn-success { background: var(--success-bg); color: var(--success); border-color: var(--success); }
+    .btn-warning { background: var(--warning-bg); color: var(--warning); border-color: var(--warning); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); }
+    .btn.active { background: var(--accent); color: #fff; }
+    .full { width: 100%; }
+
+    /* ─── FLASHCARD ─── */
+    .huddle-controls { display: flex; gap: 8px; margin-bottom: 16px; }
+    .flashcard {
+      width: 100%; min-height: 260px; perspective: 1000px; margin-bottom: 16px;
+    }
+    .card-inner {
+      position: relative; width: 100%; min-height: 260px;
+      transition: transform .5s; transform-style: preserve-3d;
+      cursor: pointer;
+    }
+    .card-inner.flipped { transform: rotateY(180deg); }
+    .card-front, .card-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      background: var(--bg-card); border-radius: var(--radius);
+      padding: 32px 24px; box-shadow: var(--shadow);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 3px solid var(--field);
+    }
+    .card-back { transform: rotateY(180deg); overflow-y: auto; align-items: flex-start; }
+    .card-word { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .card-hint { font-size: .8rem; color: var(--text-muted); margin-top: 12px; }
+    .card-actions { display: flex; gap: 12px; margin-bottom: 8px; }
+    .card-actions .btn { flex: 1; }
+    #huddle-counter { text-align: center; font-size: .8rem; color: var(--text-muted); }
+    .card-details strong { font-size: 1.2rem; color: var(--accent); }
+    .card-pos { font-size: .8rem; color: var(--text-muted); margin: 4px 0; }
+    .card-zh { font-size: 1rem; margin: 8px 0; }
+    .card-en { font-size: .85rem; color: var(--text-muted); }
+    .card-ex { font-size: .8rem; font-style: italic; color: var(--text-muted); margin-top: 8px; }
+    .card-ex-zh { font-size: .75rem; color: var(--text-muted); }
+    .card-ctx { font-size: .75rem; color: var(--success); margin-top: 8px; padding: 6px 10px; background: var(--success-bg); border-radius: var(--radius-sm); }
+
+    /* ─── QUIZ ─── */
+    .stats-bar { display: flex; gap: 16px; margin-bottom: 16px; font-size: .8rem; color: var(--text-muted); }
+    .quiz-word { font-size: 1.8rem; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 20px; }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+    .quiz-option-btn, .gap-option-btn {
+      padding: 14px 20px; background: var(--bg-card); border: 2px solid var(--border);
+      border-radius: var(--radius-sm); font-size: 1rem; cursor: pointer;
+      text-align: center; transition: all .2s;
+    }
+    .quiz-option-btn:hover, .gap-option-btn:hover { border-color: var(--accent); }
+    .quiz-option-btn.correct, .gap-option-btn.correct { border-color: var(--success); background: var(--success-bg); }
+    .quiz-option-btn:disabled, .gap-option-btn:disabled { cursor: default; opacity: .8; }
+
+    /* ─── SPELL ─── */
+    .spell-card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+    .spell-zh { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; color: var(--accent); }
+    .spell-example { font-size: .9rem; color: var(--text-muted); margin-bottom: 12px; font-style: italic; }
+    .hint-area { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 24px; }
+    .hint { font-size: .8rem; background: var(--warning-bg); color: var(--warning); padding: 4px 10px; border-radius: 4px; }
+    .spell-input {
+      width: 100%; padding: 14px 18px; border-radius: var(--radius-sm);
+      border: 2px solid var(--border); font-size: 1.1rem;
+      background: var(--bg); color: var(--text); margin-bottom: 12px;
+    }
+    .spell-input:focus { border-color: var(--accent); outline: none; }
+    .spell-actions { display: flex; gap: 8px; }
+
+    /* ─── RED ZONE ─── */
+    .red-zone { text-align: center; margin-bottom: 16px; }
+    .red-zone-progress {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--danger-bg); color: var(--danger);
+      padding: 8px 20px; border-radius: 20px; font-size: .9rem;
+    }
+    #gap-streak-count { font-weight: 800; font-size: 1.3rem; }
+    .gap-sentence {
+      font-size: 1.1rem; font-weight: 600; text-align: center;
+      padding: 16px; background: var(--bg-card); border-radius: var(--radius);
+      margin-bottom: 16px; box-shadow: var(--shadow);
+      border: 2px dashed var(--accent);
+    }
+    .gap-options { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ─── FEEDBACK ─── */
+    .feedback {
+      margin-top: 16px; padding: 16px; background: var(--bg-card);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .fb-correct { font-size: 1.2rem; font-weight: 800; color: var(--success); text-align: center; }
+    .fb-wrong { font-size: 1.1rem; font-weight: 700; color: var(--danger); text-align: center; }
+    .fb-answer, .fb-full-correct { font-size: .9rem; margin-top: 8px; color: var(--text); }
+    .fb-example, .fb-full { font-size: .85rem; font-style: italic; color: var(--text-muted); margin-top: 4px; }
+    .fb-example-zh { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+
+    /* ─── TOUCHDOWN CELEBRATION ─── */
+    .td-celebration {
+      text-align: center; padding: 24px;
+      background: linear-gradient(135deg, var(--gold-bg), var(--success-bg));
+      border-radius: var(--radius); margin: 12px 0;
+      border: 2px solid var(--gold);
+      animation: bounce .6s ease;
+    }
+    .td-celebration h2 { font-size: 1.4rem; color: var(--accent); }
+    .td-celebration p { font-size: .9rem; color: var(--success); margin-top: 4px; }
+    @keyframes bounce {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    /* ─── EMPTY STATES ─── */
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: var(--text-muted);
+      font-size: .9rem;
+    }
+    .empty-state h3 { color: var(--accent); margin-bottom: 8px; }
+    .empty-state p { margin-top: 4px; }
+
+    /* ─── TROPHY ─── */
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--bg-card); border-radius: var(--radius);
+      padding: 16px; text-align: center; box-shadow: var(--shadow);
+    }
+    .stat-card span { font-size: 2rem; font-weight: 800; color: var(--accent); display: block; }
+    .stat-card label { font-size: .75rem; color: var(--text-muted); margin-top: 4px; display: block; }
+    .achievements-grid h3 { color: var(--accent); margin-bottom: 12px; }
+    .ach-card {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      margin-bottom: 8px; border-radius: var(--radius-sm);
+      background: var(--bg-card); box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      border-left: 4px solid var(--border);
+    }
+    .ach-card.earned { border-left-color: var(--gold); background: var(--gold-bg); }
+    .ach-card.locked { opacity: .5; }
+    .ach-icon { font-size: 1.3rem; }
+    .trophy-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+    /* ─── OVERLAYS ─── */
+    .overlay {
+      position: fixed; inset: 0; background: var(--bg);
+      z-index: 100; overflow-y: auto; padding: 16px;
+    }
+    .overlay.hidden { display: none; }
+    .overlay-content { max-width: 500px; margin: 0 auto; }
+    .overlay-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .close-btn { font-size: 1.5rem; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; }
+    #search-input {
+      width: 100%; padding: 12px 16px; border-radius: var(--radius-sm);
+      border: 2px solid var(--border); font-size: 1rem;
+      background: var(--bg-card); color: var(--text); margin-bottom: 12px;
+    }
+    #filter-category {
+      width: 100%; padding: 10px 14px; border-radius: var(--radius-sm);
+      border: 2px solid var(--border); font-size: .9rem;
+      background: var(--bg-card); color: var(--text); margin-bottom: 16px;
+    }
+    .results-list { display: flex; flex-direction: column; gap: 8px; }
+    .search-result {
+      background: var(--bg-card); padding: 12px 16px; border-radius: var(--radius-sm);
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .search-result.learned { border-left: 4px solid var(--success); }
+    .sr-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .85rem; }
+    .sr-def { font-size: .75rem; color: var(--text-muted); margin-top: 4px; }
+    .sr-ex { font-size: .75rem; font-style: italic; color: var(--text-muted); }
+
+    /* ─── TOAST ─── */
+    .toast {
+      position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff; padding: 10px 24px;
+      border-radius: 20px; font-size: .85rem; font-weight: 600;
+      z-index: 200; box-shadow: 0 4px 16px rgba(0,0,0,.25);
+      transition: opacity .3s; white-space: nowrap;
+    }
+    .toast.hidden { opacity: 0; pointer-events: none; }
+
+    /* ─── BOTTOM NAV ─── */
+    #bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; max-width: 600px; margin: 0 auto;
+      background: var(--bg-card); border-top: 2px solid var(--field);
+      display: flex; justify-content: space-around; padding: 6px 0 env(safe-area-inset-bottom, 6px);
+      z-index: 50; box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+    }
+    .nav-btn {
+      background: none; border: none; color: var(--text-muted);
+      font-size: .65rem; display: flex; flex-direction: column; align-items: center;
+      gap: 2px; padding: 6px 4px; cursor: pointer; min-width: 56px;
+      transition: color .2s;
+    }
+    .nav-btn span { font-size: .62rem; }
+    .nav-btn.active { color: var(--accent); font-weight: 700; }
+    .streak-badge { font-size: .8rem; color: var(--warning); margin-left: 6px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (min-width: 420px) {
+      .nav-btn { font-size: .75rem; }
+      .nav-btn span { font-size: .68rem; }
+      #app-header h1 { font-size: 1.5rem; }
+    }
+
+    /* ─── UTILITY ─── */
+    .hidden { display: none !important; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .msg { font-size: .8rem; text-align: center; margin-top: 8px; }
+    .msg.success { color: var(--success); }
+    .msg.error { color: var(--danger); }
+  </style>
+</body>
+</html>
