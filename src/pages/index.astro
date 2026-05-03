@@ -55,6 +55,10 @@
       <button id="export-btn" class="btn btn-primary full">📥 Export Progress (JSON)</button>
       <button id="import-btn" class="btn btn-secondary full">📤 Import Progress (JSON)</button>
       <input type="file" id="import-file" accept=".json" class="hidden" />
+      <hr />
+      <button id="export-csv-btn" class="btn btn-secondary full">📊 Export Word Progress (CSV)</button>
+      <button id="import-csv-btn" class="btn btn-secondary full">📊 Import Word Progress (CSV)</button>
+      <input type="file" id="import-csv-file" accept=".csv,.txt" class="hidden" />
       <p id="import-msg" class="msg hidden"></p>
       <hr />
       <button id="reset-btn" class="btn btn-danger full">🗑 Reset All Progress</button>
@@ -209,8 +213,10 @@
         <div id="ach-list"></div>
       </div>
       <div id="trophy-actions" class="trophy-actions">
-        <button id="trophy-export" class="btn btn-secondary">📥 Export Data</button>
-        <button id="trophy-import" class="btn btn-secondary">📤 Import Data</button>
+        <button id="trophy-export" class="btn btn-secondary">📥 JSON Export</button>
+        <button id="trophy-import" class="btn btn-secondary">📤 JSON Import</button>
+        <button id="trophy-csv-export" class="btn btn-secondary">📊 CSV Export</button>
+        <button id="trophy-csv-import" class="btn btn-secondary">📊 CSV Import</button>
       </div>
     </section>
   </main>
@@ -967,7 +973,18 @@
       $('trophy-import').addEventListener('click', () => {
         ($('import-file') as HTMLInputElement).click();
       });
+      $('trophy-csv-export').addEventListener('click', exportCSV);
+      $('trophy-csv-import').addEventListener('click', () => {
+        ($('import-csv-file') as HTMLInputElement).click();
+      });
       $('import-file').addEventListener('change', importData);
+
+      // CSV Export/Import
+      $('export-csv-btn').addEventListener('click', exportCSV);
+      $('import-csv-btn').addEventListener('click', () => {
+        ($('import-csv-file') as HTMLInputElement).click();
+      });
+      $('import-csv-file').addEventListener('change', importCSV);
 
       // Click outside overlays
       $('search-overlay').addEventListener('click', (e) => {
@@ -1020,6 +1037,110 @@
       };
       reader.readAsText(file);
       (e.target as HTMLInputElement).value = '';
+    }
+
+    // ─── CSV EXPORT/IMPORT ───
+    function exportCSV() {
+      const header = 'id,word,learned,favorite,weak,category,difficulty';
+      const rows = words.map(w => {
+        return [
+          w.id,
+          `"${w.word}"`,
+          progress.learnedWords.includes(w.id) ? '1' : '0',
+          progress.favoriteWords.includes(w.id) ? '1' : '0',
+          progress.weakWords.includes(w.id) ? '1' : '0',
+          w.category,
+          w.difficulty,
+        ].join(',');
+      });
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob(['\uFEFF' + csv, '\n'], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `regulus-playbook-words-${getToday()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('📊 Word progress exported as CSV!');
+    }
+
+    function importCSV(e: Event) {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const text = (reader.result as string).replace(/^\uFEFF/, '');
+          const lines = text.trim().split('\n');
+          if (lines.length < 2) { showToast('❌ CSV is empty'); return; }
+
+          // Parse CSV (simple — handles quoted fields)
+          const headers = parseCSVLine(lines[0]);
+          const wordIdx = headers.indexOf('word');
+          const learnedIdx = headers.indexOf('learned');
+          const favIdx = headers.indexOf('favorite');
+          const weakIdx = headers.indexOf('weak');
+
+          if (wordIdx < 0) { showToast('❌ CSV missing "word" column'); return; }
+
+          // Reset current lists
+          progress.learnedWords = [];
+          progress.favoriteWords = [];
+          progress.weakWords = [];
+
+          const skipped: string[] = [];
+          for (let i = 1; i < lines.length; i++) {
+            const cols = parseCSVLine(lines[i]);
+            const csvWord = cols[wordIdx].replace(/^"|"$/g, '').toLowerCase();
+            // Match by word text
+            const matched = words.find(w => w.word.toLowerCase() === csvWord);
+            if (!matched) { skipped.push(csvWord); continue; }
+
+            if (learnedIdx >= 0 && cols[learnedIdx]?.trim() === '1') {
+              progress.learnedWords.push(matched.id);
+            }
+            if (favIdx >= 0 && cols[favIdx]?.trim() === '1') {
+              progress.favoriteWords.push(matched.id);
+            }
+            if (weakIdx >= 0 && cols[weakIdx]?.trim() === '1') {
+              progress.weakWords.push(matched.id);
+            }
+          }
+
+          save();
+          updateAllViews();
+          updateLangUI();
+
+          let msg = `📤 CSV imported! ${progress.learnedWords.length} learned, ${progress.favoriteWords.length} favorites`;
+          if (skipped.length > 0) msg += ` (${skipped.length} words skipped)`;
+          showToast(msg);
+        } catch {
+          showToast('❌ Invalid CSV format');
+        }
+      };
+      reader.readAsText(file);
+      (e.target as HTMLInputElement).value = '';
+    }
+
+    function parseCSVLine(line: string): string[] {
+      const result: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"') {
+            if (i + 1 < line.length && line[i + 1] === '"') { current += '"'; i++; }
+            else inQuotes = false;
+          } else current += ch;
+        } else {
+          if (ch === '"') inQuotes = true;
+          else if (ch === ',') { result.push(current.trim()); current = ''; }
+          else current += ch;
+        }
+      }
+      result.push(current.trim());
+      return result;
     }
 
     // ─── STARTUP ───
